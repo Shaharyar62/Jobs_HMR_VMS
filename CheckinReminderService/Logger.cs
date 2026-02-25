@@ -19,52 +19,24 @@ namespace Logger
             {
                 string baseDir = AppDomain.CurrentDomain.BaseDirectory;
 
-                string errorDir = Path.Combine(baseDir, "Error\\");
-                if (!Directory.Exists(errorDir))
-                    Directory.CreateDirectory(errorDir);
-
                 string logsDir = Path.Combine(baseDir, "Logs\\");
                 if (!Directory.Exists(logsDir))
                     Directory.CreateDirectory(logsDir);
 
-                FileStream? fs = null;
-                StreamWriter? logger = null;
-
-                if (log == LogType.ErrorLog)
-                {
-                    fs = new FileStream(errorDir + DateTime.Now.ToString("MM-dd-yyyy") + ".txt", FileMode.Append, FileAccess.Write, FileShare.Write);
-                    logger = new StreamWriter(fs);
-                }
-                else
-                {
-                    string filePath = logsDir + DateTime.Now.ToString("MM-dd-yyyy") + ".txt";
-                    if (lastLogWriter != null && LastLogFileName == filePath)
-                    {
-                        logger = lastLogWriter;
-                    }
-                    else
-                    {
-                        lastLogWriter?.Close();
-                        fs = new FileStream(filePath, FileMode.Append, FileAccess.Write, FileShare.ReadWrite);
-                        logger = new StreamWriter(fs) { AutoFlush = true };
-                        LastLogFileName = filePath;
-                        lastLogWriter = logger;
-                    }
-                }
-
                 string entry = $"{DateTime.Now:MM-dd-yyyy hh:mm:ss} - {log} : {title} - {message}"
                     + (log == LogType.ErrorLog && !string.IsNullOrEmpty(stkTrace) ? $" | Stack Trace: {stkTrace}" : "");
 
-                logger?.WriteLine(entry);
-                Console.WriteLine(entry);
-
-                if (log == LogType.ErrorLog && logger != null && fs != null)
+                string filePath = logsDir + DateTime.Now.ToString("MM-dd-yyyy") + ".txt";
+                if (lastLogWriter == null || LastLogFileName != filePath)
                 {
-                    logger.WriteLine("Error: " + stkTrace);
-                    Console.WriteLine("Error: " + stkTrace);
-                    logger.Close();
-                    fs.Close();
+                    lastLogWriter?.Close();
+                    FileStream fs = new FileStream(filePath, FileMode.Append, FileAccess.Write, FileShare.ReadWrite);
+                    lastLogWriter = new StreamWriter(fs) { AutoFlush = true };
+                    LastLogFileName = filePath;
                 }
+
+                lastLogWriter.WriteLine(entry);
+                Console.WriteLine(entry);
             }
         }
     }
